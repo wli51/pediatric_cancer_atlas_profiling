@@ -28,7 +28,7 @@ import loaddata_utils as ld_utils
 
 # Paths for parameters to make loaddata csv
 index_directory = pathlib.Path("/media/18tbdrive/ALSF_pilot_data/SN0313537/")
-config_path = pathlib.Path("./config.yml").absolute()
+config_dir_path = pathlib.Path("./config_files").absolute()
 output_csv_dir = pathlib.Path("./loaddata_csvs")
 output_csv_dir.mkdir(parents=True, exist_ok=True)
 
@@ -46,16 +46,31 @@ for folder in images_folders:
     # Get the first folder directly under the index_directory
     relative_path = folder.relative_to(index_directory)
     first_folder = relative_path.parts[0]  # First-level folder
-
-    # Generate the plate name based on folder structure
+    
+    # Generate the plate name and find matching config file based on folder structure
     if first_folder.startswith('BR00'):
         plate_name = first_folder.split('_')[0]  # Take the first part
+        config_path = config_dir_path / "config.yml"  # Use default config for BR00
 
     elif first_folder.startswith('2024'):
         second_folder = relative_path.parts[1]  # Second-level folder
-        part1 = '_'.join(first_folder.split('_')[-2:])  # Last two parts of first folder
-        part2 = second_folder.split('_')[0]  # First part of second folder
-        plate_name = f"{part1}_{part2}"  # Combine them
+        part1 = '_'.join(first_folder.split('_')[-2:])  # Last two parts of first folder ("CellLine_Re-imaged")
+        part2 = second_folder.split('_')[0]  # First part of second folder (BR00 ID)
+
+        # Combine to make plate name for saving CSV
+        plate_name = f"{part1}_{part2}" 
+
+        # Find the matching config file by matching part1 with the config file's prefix
+        matching_configs = list(config_dir_path.glob(f"{part1.split('_')[0]}_*.yml"))
+        
+        # Debugging print to check if matching config files are found
+        print(f"Matching configs found: {matching_configs}")
+
+        if matching_configs:
+            config_path = matching_configs[0]  # Take the first match
+        else:
+            print(f"No matching config file for: {part1}")
+            continue  # Skip if no matching config file
 
     else:
         print(f"Unexpected folder pattern: {folder}")
@@ -67,7 +82,7 @@ for folder in images_folders:
     # Call the function to create the LoadData CSV
     ld_utils.create_loaddata_csv(
         index_directory=folder,
-        config_path=config_path,
+        config_path=config_path,  # Use the matched config file
         path_to_output=path_to_output_csv,
     )
 
@@ -98,12 +113,15 @@ print(f"Found {len(br00_ids)} BR00 IDs: {br00_ids}")
 # In[5]:
 
 
-# Step 3: Initialize storage to track used files
+# Step 4: Initialize storage to track used files and find proper column order 
 br00_dataframes = {br_id: [] for br_id in br00_ids}
 used_files = set()  # Store filenames used in the process
 concat_files = []  # Track new concatenated CSV files
 
-# Step 4: Add 'Metadata_Reimaged' column and group by BR00 ID
+# Load one BR00 starting CSV that will have the correct column order
+column_order = pd.read_csv(pathlib.Path(f"{output_csv_dir}/{list(br00_ids)[0]}_loaddata_original.csv"), nrows=0).columns.tolist()
+
+# Step 5: Add 'Metadata_Reimaged' column and group by BR00 ID
 for csv_file in csv_files:
     filename = csv_file.stem
     match = br00_pattern.search(filename)
@@ -112,13 +130,16 @@ for csv_file in csv_files:
         br_id = match.group(1)
 
         # Read the CSV file into a DataFrame
-        df = pd.read_csv(csv_file)
+        loaddata_df = pd.read_csv(csv_file)
+
+        # Reorder DataFrame columns to match the correct column order
+        loaddata_df = loaddata_df[column_order]  # Ensure the columns are in the correct order
 
         # Add 'Metadata_Reimaged' column based on filename
-        df['Metadata_Reimaged'] = 'Re-imaged' in filename
+        loaddata_df['Metadata_Reimaged'] = 'Re-imaged' in filename
 
         # Append the DataFrame to the corresponding BR00 group
-        br00_dataframes[br_id].append(df)
+        br00_dataframes[br_id].append(loaddata_df)
 
         # Track this file as used
         used_files.add(csv_file.name)
@@ -127,7 +148,7 @@ for csv_file in csv_files:
 example_id = next(iter(br00_dataframes))  # Get the first BR00 ID
 example_df = pd.concat(br00_dataframes[example_id], ignore_index=True)
 print(f"\nExample DataFrame for BR00 ID: {example_id}")
-example_df.iloc[:, [0, 1, -1]]  # Display only the first two and last column
+example_df.iloc[:, [0, 1, -1]] # Display only the first two and last column
 
 
 # ### Concat the re-imaged and original data for the same plate and remove any duplicate wells that come from the original data
@@ -147,9 +168,9 @@ for br_id, dfs in br00_dataframes.items():
             'Metadata_Reimaged', ascending=False
         ).drop_duplicates(subset=['Metadata_Well', 'Metadata_Site'], keep='first')
 
-        # Sort by 'Metadata_Col' and 'Metadata_Row'
+        # Sort by 'Metadata_Col', 'Metadata_Row', and 'Metadata_Site
         sorted_df = deduplicated_df.sort_values(
-            ['Metadata_Col', 'Metadata_Row'], ascending=True
+            ['Metadata_Col', 'Metadata_Row', "Metadata_Site"], ascending=True
         )
 
         # Save the cleaned, concatenated, and sorted DataFrame to a new CSV file
