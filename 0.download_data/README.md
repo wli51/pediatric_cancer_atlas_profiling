@@ -31,3 +31,32 @@ All platemaps and layout figures will be included under the [metadata](./metadat
    - Note: You must explicitly configure your Globus Connect Personal installation to allow access to the intended local paths.
 5. Select the files to transfer and click **Start Transfer**. You can configure transfer options (e.g., email notifications, concurrency) under **Transfer & Timer Options**.
 6. During the transfer, you may need to authorize access to both endpoints using your CU credentials.
+
+### Instructions for Data Transfer Using Globus CLI
+1. Log in to the Globus CLI using the command `globus login`.
+
+2. Look up endpoint IDs:
+   - For Alpine, use the command `globus endpoint search "CU Boulder Research Computing"`. 
+        * As of 01/02/2025, the endpoint ID for Alpine is `4718fe94-aafd-498a-8bae-6bd430bb50a0`.
+   - For your local machine, use the command `globus endpoint local-id`.
+
+3. Initiate the transfer:
+   - Use the command `globus transfer <source_endpoint_id>:/pl/active/koala/<file_or_dir> <destination_endpoint_id>:/local/path/to/destination`.
+   - Replace `<source_endpoint_id>` and `<destination_endpoint_id>` with the appropriate endpoint IDs.
+   - Replace `<file_or_dir>` and `/local/path/to/destination` with the specific paths.
+
+4. Confirm the transfer:
+   - You may be prompted to authorize the transfer. Follow the on-screen instructions.
+   - After initiating the transfer, the console should output:  
+     `Message: The transfer has been accepted and a task has been created and queued for execution`  
+     `Task ID: xxxxx`
+
+5. Monitor the transfer:
+   - Use the command `globus task show <task_id>` to check the status of your transfer.
+
+---
+
+### Future Access Information
+Once the microscopy image data is publicly released, access will no longer require CU credentials or the current development-specific setup. Instructions for public access, including any associated data repositories, will be added here upon release.
+
+---
