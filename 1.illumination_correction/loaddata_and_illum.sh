@@ -12,5 +12,5 @@ jupyter nbconvert --to script --output-dir=nbconverted/ *.ipynb
 
 # run Python script calculating IC functions + extract QC features with CellProfiler
 python nbconverted/1.extract_image_quality.py
-python nbconverted/2.evalute_qc.py
+python nbconverted/2.evaluate_qc.py
 python nbconverted/3.cp_illum_correction.py
