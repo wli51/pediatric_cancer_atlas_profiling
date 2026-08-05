@@ -58,6 +58,7 @@ When the data becomes publicly available, access methods will change, and this R
 ---
 
 ### Future Access Information
-Once the microscopy image data is publicly released, access will no longer require CU credentials or the current development-specific setup. Instructions for public access, including any associated data repositories, will be added here upon release.
+Once the microscopy image data is publicly released, access will no longer require CU credentials or the current development-specific setup.
+Instructions for public access, including any associated data repositories, will be added here upon release.
 
 ---
