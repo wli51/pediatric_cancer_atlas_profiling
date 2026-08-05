@@ -5,7 +5,7 @@ All platemaps and layout figures will be included under the [metadata](./metadat
 
 --- 
 
-## Current Access Instructions for Miscroscopy Images (Development)
+## Current Access Instructions for Microscopy Images (Development)
 
 **Note:** The current method of accessing and downloading the microscopy image data is intended for development purposes only. 
 When the data becomes publicly available, access methods will change, and this README will be updated to reflect the final public access protocol.
